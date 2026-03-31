@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: stock-management
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python -c "from wsgi import app, db; app.app_context().push(); db.create_all()"
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.6

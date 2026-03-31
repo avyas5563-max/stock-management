@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Upcoming Payments{% endblock %}
+{% block page_title %}Upcoming Payments (Next 7 Days){% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header bg-warning">
+            <h5><i class="bi bi-calendar-event"></i> Payments Due Soon</h5>
+        </div>
+        <div class="card-body">
+            {% if upcoming %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Type</th>
+                            <th>Party</th>
+                            <th>Amount Remaining</th>
+                            <th>Due Date</th>
+                            <th>Days Left</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in upcoming %}
+                        <tr>
+                            <td>{{ transaction.transaction_id }}</td>
+                            <td><span class="badge bg-info">{{ transaction.reference_type }}</span></td>
+                            <td>{{ transaction.party_type }} #{{ transaction.party_id }}</td>
+                            <td>₹{{ "%.2f"|format(transaction.total_amount - transaction.advance_payment) }}</td>
+                            <td>{{ transaction.due_date }}</td>
+                            <td>
+                                {% set days_left = (transaction.due_date - today).days %}
+                                <span class="badge bg-{{ 'danger' if days_left <= 1 else 'warning' }}">
+                                    {{ days_left }} day(s)
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('money.view_transaction', transaction_id=transaction.transaction_id) }}" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle"></i> No upcoming payments in the next 7 days!
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <a href="{{ url_for('money.list_transactions') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Transactions
+        </a>
+    </div>
+</div>
+{% endblock %}

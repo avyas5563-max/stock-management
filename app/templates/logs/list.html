@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Logs{% endblock %}
+{% block page_title %}Activity Logs{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-journal-text"></i> System Activity Logs</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label for="table" class="form-label">Filter by Table</label>
+                    <select class="form-select" id="table" name="table" onchange="this.form.submit()">
+                        <option value="">All Tables</option>
+                        {% for table in tables %}
+                        <option value="{{ table }}" {% if table == table_filter %}selected{% endif %}>{{ table }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="action" class="form-label">Filter by Action</label>
+                    <select class="form-select" id="action" name="action" onchange="this.form.submit()">
+                        <option value="">All Actions</option>
+                        {% for action in actions %}
+                        <option value="{{ action }}" {% if action == action_filter %}selected{% endif %}>{{ action }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </form>
+            
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Table</th>
+                            <th>Record ID</th>
+                            <th>Action</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs.items %}
+                        <tr>
+                            <td>{{ log.log_id }}</td>
+                            <td>{{ log.user.username }}</td>
+                            <td><span class="badge bg-secondary">{{ log.table_name }}</span></td>
+                            <td>{{ log.record_id }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if log.action_taken == 'create' else 'warning' if log.action_taken == 'update' else 'danger' if log.action_taken == 'delete' else 'info' }}">
+                                    {{ log.action_taken }}
+                                </span>
+                            </td>
+                            <td>{{ log.description or '-' }}</td>
+                            <td>{{ log.action_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

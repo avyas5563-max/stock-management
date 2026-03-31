@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block head %}
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<style>
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Last Updated Timestamp -->
+    <div class="alert alert-info alert-dismissible fade show d-flex justify-content-between align-items-center" role="alert">
+        <div class="d-flex align-items-center gap-3">
+            <div>
+                <i class="bi bi-info-circle"></i> <strong>Auto-refresh:</strong> <span id="loadTime"></span>
+                <span class="badge bg-success" id="autoRefreshStatus">
+                    <i class="bi bi-arrow-repeat"></i> Active (every 5s)
+                </span>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" onclick="manualRefresh()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh Now
+            </button>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3>{{ total_items }}</h3>
+                        <p class="mb-0">Total Items</p>
+                    </div>
+                    <i class="bi bi-box icon"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card bg-success text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3>{{ total_customers }}</h3>
+                        <p class="mb-0">Customers</p>
+                    </div>
+                    <i class="bi bi-people icon"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card bg-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3>{{ total_suppliers }}</h3>
+                        <p class="mb-0">Suppliers</p>
+                    </div>
+                    <i class="bi bi-truck icon"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card bg-warning text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3>₹{{ "%.2f"|format(total_sales) }}</h3>
+                        <p class="mb-0">Sales (This Month)</p>
+                        <small>Pending: {{ pending_sales }}</small>
+                    </div>
+                    <i class="bi bi-graph-up icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Financial Summary Row -->
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="card border-success" id="receivablesCard" data-amount="{{ total_receivables }}" data-count="{{ pending_sales }}">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="bi bi-arrow-down-circle"></i> Receivables (Debit) - Customer Pending</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="text-success pulse" id="receivablesAmount">₹{{ "%.2f"|format(total_receivables) }}</h2>
+                    <p class="text-muted mb-0">Total amount pending from customers (<span id="pendingSalesCount">{{ pending_sales }}</span> sales pending)</p>
+                    <hr>
+                    <small>
+                        <strong>Total Sales This Month:</strong> ₹{{ "%.2f"|format(total_sales) }}<br>
+                        <strong>Paid:</strong> ₹{{ "%.2f"|format(total_sales - total_receivables if total_receivables > 0 else total_sales) }}<br>
+                        <strong>Pending:</strong> ₹{{ "%.2f"|format(total_receivables) }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card border-danger" id="payablesCard" data-amount="{{ total_payables }}" data-count="{{ pending_purchases }}">
+                <div class="card-header bg-danger text-white">
+                    <h5><i class="bi bi-arrow-up-circle"></i> Payables (Credit) - Supplier Pending</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="text-danger pulse" id="payablesAmount">₹{{ "%.2f"|format(total_payables) }}</h2>
+                    <p class="text-muted mb-0">Total amount pending to suppliers (<span id="pendingPurchasesCount">{{ pending_purchases }}</span> purchases pending)</p>
+                    <hr>
+                    <small>
+                        <strong>Total Purchases This Month:</strong> ₹{{ "%.2f"|format(total_purchases) }}<br>
+                        <strong>Paid:</strong> ₹{{ "%.2f"|format(total_purchases - total_payables if total_payables > 0 else total_purchases) }}<br>
+                        <strong>Pending:</strong> ₹{{ "%.2f"|format(total_payables) }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Section -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5><i class="bi bi-graph-up"></i> Daily Sales & Purchases (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-cart-plus"></i> Recent Purchases</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Supplier</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for purchase in recent_purchases %}
+                                <tr>
+                                    <td>{{ purchase.purchase_id }}</td>
+                                    <td>{{ purchase.supplier.supplier_name }}</td>
+                                    <td>{{ purchase.purchase_date }}</td>
+                                    <td>₹{{ "%.2f"|format(purchase.total_amount) }}</td>
+                                    <td><span class="badge bg-{{ 'success' if purchase.status == 'completed' else 'warning' }}">{{ purchase.status }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-cart-check"></i> Recent Sales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in recent_sales %}
+                                <tr>
+                                    <td>{{ sale.sale_id }}</td>
+                                    <td>{{ sale.customer.name }}</td>
+                                    <td>{{ sale.sale_date }}</td>
+                                    <td>₹{{ "%.2f"|format(sale.total_amount) }}</td>
+                                    <td><span class="badge bg-{{ 'success' if sale.status == 'completed' else 'warning' }}">{{ sale.status }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if low_stock_items %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Low Stock Alert</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Current Stock</th>
+                                    <th>Min Stock</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item, inventory in low_stock_items %}
+                                <tr>
+                                    <td>{{ item.item_name }}</td>
+                                    <td>{{ item.category.name }}</td>
+                                    <td class="text-danger">{{ inventory.current_stock }} {{ item.unit }}</td>
+                                    <td>{{ item.min_stock }} {{ item.unit }}</td>
+                                    <td>
+                                        <a href="{{ url_for('inventory.inventory_details', item_id=item.item_id) }}" class="btn btn-sm btn-primary">View</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Daily Sales & Purchases Chart
+const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+const dailyChart = new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+        labels: {{ daily_labels|tojson }},
+        datasets: [
+            {
+                label: 'Sales',
+                data: {{ daily_sales_data|tojson }},
+                borderColor: 'rgb(40, 167, 69)',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            },
+            {
+                label: 'Purchases',
+                data: {{ daily_purchases_data|tojson }},
+                borderColor: 'rgb(220, 53, 69)',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.dataset.label + ': ₹' + context.parsed.y.toFixed(2);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '₹' + value.toFixed(0);
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Force reload on browser back/forward navigation
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        // Page came from browser cache (back button)
+        window.location.reload();
+    }
+});
+
+// Prevent browser from caching this page
+window.onbeforeunload = function() {
+    // This helps ensure the page is reloaded fresh
+};
+
+// Show load timestamp
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-IN', { hour12: true });
+    const dateString = now.toLocaleDateString('en-IN');
+    
+    document.getElementById('loadTime').textContent = 'Last updated: ' + timeString;
+    
+    // Debug: Log values to console
+    const receivables = document.getElementById('receivablesCard').dataset.amount;
+    const payables = document.getElementById('payablesCard').dataset.amount;
+    const pendingSales = document.getElementById('receivablesCard').dataset.count;
+    const pendingPurchases = document.getElementById('payablesCard').dataset.count;
+    
+    console.log('=== DASHBOARD DATA ===');
+    console.log('Load Time:', dateString, timeString);
+    console.log('Receivables:', receivables);
+    console.log('Payables:', payables);
+    console.log('Pending Sales:', pendingSales);
+    console.log('Pending Purchases:', pendingPurchases);
+    console.log('====================');
+    
+    // Stop pulsing animation after 3 seconds
+    setTimeout(function() {
+        document.getElementById('receivablesAmount').classList.remove('pulse');
+        document.getElementById('payablesAmount').classList.remove('pulse');
+    }, 3000);
+    
+    // Auto-refresh dashboard data every 5 seconds (faster updates)
+    setInterval(refreshDashboardData, 5000);
+});
+
+// Function to refresh dashboard data via AJAX
+function refreshDashboardData() {
+    fetch('/api/dashboard-stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Dashboard auto-refreshed:', data.timestamp);
+                
+                // Update receivables
+                const receivables = data.data.total_receivables;
+                const pendingSales = data.data.pending_sales;
+                document.getElementById('receivablesAmount').textContent = '₹' + receivables.toFixed(2);
+                document.getElementById('pendingSalesCount').textContent = pendingSales;
+                document.getElementById('receivablesCard').dataset.amount = receivables;
+                document.getElementById('receivablesCard').dataset.count = pendingSales;
+                
+                // Update payables
+                const payables = data.data.total_payables;
+                const pendingPurchases = data.data.pending_purchases;
+                document.getElementById('payablesAmount').textContent = '₹' + payables.toFixed(2);
+                document.getElementById('pendingPurchasesCount').textContent = pendingPurchases;
+                document.getElementById('payablesCard').dataset.amount = payables;
+                document.getElementById('payablesCard').dataset.count = pendingPurchases;
+                
+                // Update timestamp
+                const now = new Date();
+                document.getElementById('loadTime').textContent = 'Last updated: ' + now.toLocaleTimeString('en-IN', { hour12: true });
+                
+                // Brief pulse animation on update
+                document.getElementById('receivablesAmount').classList.add('pulse');
+                document.getElementById('payablesAmount').classList.add('pulse');
+                setTimeout(function() {
+                    document.getElementById('receivablesAmount').classList.remove('pulse');
+                    document.getElementById('payablesAmount').classList.remove('pulse');
+                }, 1000);
+                
+                // Update status indicator
+                const statusBadge = document.getElementById('autoRefreshStatus');
+                statusBadge.classList.remove('bg-danger');
+                statusBadge.classList.add('bg-success');
+                statusBadge.innerHTML = '<i class="bi bi-arrow-repeat"></i> Active (every 5s)';
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing dashboard:', error);
+            
+            // Update status indicator to show error
+            const statusBadge = document.getElementById('autoRefreshStatus');
+            statusBadge.classList.remove('bg-success');
+            statusBadge.classList.add('bg-danger');
+            statusBadge.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error';
+        });
+}
+
+// Manual refresh function
+function manualRefresh() {
+    console.log('Manual refresh triggered');
+    const btn = event.target.closest('button');
+    const icon = btn.querySelector('i');
+    
+    // Show loading state
+    icon.classList.add('fa-spin');
+    btn.disabled = true;
+    
+    refreshDashboardData();
+    
+    // Re-enable button after 1 second
+    setTimeout(function() {
+        icon.classList.remove('fa-spin');
+        btn.disabled = false;
+    }, 1000);
+}
+
+// Refresh when page becomes visible (user switches back to this tab)
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        console.log('Page became visible, refreshing data...');
+        refreshDashboardData();
+    }
+});
+
+// Refresh on page focus (user comes back to browser window)
+window.addEventListener('focus', function() {
+    console.log('Window gained focus, refreshing data...');
+    refreshDashboardData();
+});
+</script>
+
+{% endblock %}

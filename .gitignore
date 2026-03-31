@@ -1,0 +1,15 @@
+*.pyc
+__pycache__/
+*.log
+.env
+venv/
+env/
+.vscode/
+.idea/
+instance/
+flask_session/
+uploads/
+*.swp
+*.swo
+*~
+.DS_Store

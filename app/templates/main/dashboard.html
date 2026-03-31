@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block head %}
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert-card alert-info">
+                <h4><i class="bi bi-person-circle"></i> Welcome back, {{ current_user.name }}!</h4>
+                <p class="mb-2">Here's your business overview for today. <span class="badge bg-primary" id="currentDate"></span></p>
+                <small class="text-muted"><i class="bi bi-clock"></i> Last updated: <span id="loadTime"></span></small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Health Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3"><i class="bi bi-graph-up"></i> Financial Health Overview</h5>
+        </div>
+        
+        <!-- Money to Collect (Receivables) -->
+        <div class="col-md-6">
+            <div class="financial-card card border-success">
+                <div class="card-header bg-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">
+                                <i class="bi bi-arrow-down-circle"></i> Money to Collect
+                                <span class="info-tooltip" data-bs-toggle="tooltip" title="Total amount your customers owe you">
+                                    <i class="bi bi-info-circle"></i>
+                                </span>
+                            </h5>
+                        </div>
+                        {% if pending_sales > 0 %}
+                        <span class="badge bg-light text-success">{{ pending_sales }} Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="financial-amount text-success" id="receivablesAmount">₹{{ "%.2f"|format(total_receivables) }}</div>
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-people"></i> {{ pending_sales }} customers have pending payments
+                    </p>
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Total Sales (This Month)</small>
+                            <strong class="text-success">₹{{ "%.2f"|format(total_sales) }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Already Collected</small>
+                            <strong class="text-success">₹{{ "%.2f"|format(total_sales - total_receivables if total_receivables > 0 else total_sales) }}</strong>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('money.list_transactions', filter='pending') }}" class="btn btn-success btn-sm quick-action-btn w-100">
+                            <i class="bi bi-cash-stack"></i> View Pending Payments
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Money to Pay (Payables) -->
+        <div class="col-md-6">
+            <div class="financial-card card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">
+                                <i class="bi bi-arrow-up-circle"></i> Money to Pay
+                                <span class="info-tooltip" data-bs-toggle="tooltip" title="Total amount you owe to suppliers">
+                                    <i class="bi bi-info-circle"></i>
+                                </span>
+                            </h5>
+                        </div>
+                        {% if pending_purchases > 0 %}
+                        <span class="badge bg-light text-danger">{{ pending_purchases }} Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="financial-amount text-danger" id="payablesAmount">₹{{ "%.2f"|format(total_payables) }}</div>
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-truck"></i> {{ pending_purchases }} suppliers waiting for payment
+                    </p>
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Total Purchases (This Month)</small>
+                            <strong class="text-danger">₹{{ "%.2f"|format(total_purchases) }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Already Paid</small>
+                            <strong class="text-danger">₹{{ "%.2f"|format(total_purchases - total_payables if total_payables > 0 else total_purchases) }}</strong>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('money.list_transactions', filter='pending') }}" class="btn btn-danger btn-sm quick-action-btn w-100">
+                            <i class="bi bi-wallet2"></i> View Pending Payments
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="enhanced-card card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{{ url_for('sales.create_sale') }}" class="btn btn-primary quick-action-btn w-100">
+                                <i class="bi bi-cart-plus"></i> New Sale
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{{ url_for('purchases.create_purchase') }}" class="btn btn-info quick-action-btn w-100">
+                                <i class="bi bi-bag-plus"></i> New Purchase
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{{ url_for('customers.create_customer') }}" class="btn btn-success quick-action-btn w-100">
+                                <i class="bi bi-person-plus"></i> Add Customer
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{{ url_for('items.create_item') }}" class="btn btn-warning quick-action-btn w-100">
+                                <i class="bi bi-box-seam"></i> Add Item
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Business Metrics -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3"><i class="bi bi-bar-chart"></i> Key Business Metrics</h5>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="mb-1">Total Items in Catalog</p>
+                        <h3>{{ total_items }}</h3>
+                        <small><i class="bi bi-box"></i> Products available</small>
+                    </div>
+                    <i class="bi bi-boxes icon"></i>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('items.list_items') }}" class="btn btn-light btn-sm">View All</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card bg-success text-white">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="mb-1">Total Customers</p>
+                        <h3>{{ total_customers }}</h3>
+                        <small><i class="bi bi-people"></i> Active customers</small>
+                    </div>
+                    <i class="bi bi-person-lines-fill icon"></i>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-light btn-sm">View All</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card bg-info text-white">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="mb-1">Total Suppliers</p>
+                        <h3>{{ total_suppliers }}</h3>
+                        <small><i class="bi bi-truck"></i> Active suppliers</small>
+                    </div>
+                    <i class="bi bi-shop icon"></i>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('suppliers.list_suppliers') }}" class="btn btn-light btn-sm">View All</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card bg-warning text-white">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="mb-1">Sales This Month</p>
+                        <h3>₹{{ "%.2f"|format(total_sales) if total_sales > 1000 else total_sales|int }}</h3>
+                        {% if sales_change_percent != 0 %}
+                        <small>
+                            <i class="bi bi-{{ 'arrow-up' if sales_change_percent > 0 else 'arrow-down' }}"></i>
+                            {{ "%.1f"|format(sales_change_percent|abs) }}% vs last month
+                        </small>
+                        {% endif %}
+                    </div>
+                    <i class="bi bi-graph-up-arrow icon"></i>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('sales.list_sales') }}" class="btn btn-light btn-sm">View Sales</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="enhanced-card card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-cart-check"></i> Recent Sales</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_sales %}
+                    <div class="table-responsive">
+                        <table class="table modern-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in recent_sales %}
+                                <tr>
+                                    <td><strong>#{{ sale.sale_id }}</strong></td>
+                                    <td>{{ sale.customer.name }}</td>
+                                    <td><strong class="text-success">₹{{ "%.2f"|format(sale.total_amount) }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if sale.status == 'completed' else 'warning' }} status-badge">
+                                            {{ sale.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('sales.list_sales') }}" class="btn btn-outline-primary btn-sm">
+                            View All Sales <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted py-4">No sales recorded yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="enhanced-card card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-cart-plus"></i> Recent Purchases</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_purchases %}
+                    <div class="table-responsive">
+                        <table class="table modern-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Supplier</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for purchase in recent_purchases %}
+                                <tr>
+                                    <td><strong>#{{ purchase.purchase_id }}</strong></td>
+                                    <td>{{ purchase.supplier.supplier_name }}</td>
+                                    <td><strong class="text-danger">₹{{ "%.2f"|format(purchase.total_amount) }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if purchase.status == 'completed' else 'warning' }} status-badge">
+                                            {{ purchase.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('purchases.list_purchases') }}" class="btn btn-outline-info btn-sm">
+                            View All Purchases <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted py-4">No purchases recorded yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    {% if low_stock_items %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert-card alert-danger">
+                <h5><i class="bi bi-exclamation-triangle-fill"></i> ⚠️ Low Stock Alert - Action Required!</h5>
+                <p class="mb-3">The following items are running low and need to be restocked soon:</p>
+                <div class="table-responsive">
+                    <table class="table modern-table">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Minimum Required</th>
+                                <th>Action Needed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item, inventory in low_stock_items %}
+                            <tr>
+                                <td><strong>{{ item.item_name }}</strong></td>
+                                <td><span class="badge bg-secondary">{{ item.category.name }}</span></td>
+                                <td><span class="text-danger"><strong>{{ inventory.current_stock }} {{ item.unit }}</strong></span></td>
+                                <td>{{ item.min_stock }} {{ item.unit }}</td>
+                                <td>
+                                    <a href="{{ url_for('purchases.create_purchase') }}" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-cart-plus"></i> Restock Now
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Set current date
+    const now = new Date();
+    const dateString = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeString = now.toLocaleTimeString('en-IN', { hour12: true });
+    
+    document.getElementById('currentDate').textContent = dateString;
+    document.getElementById('loadTime').textContent = timeString;
+});
+
+// Auto-refresh functionality
+setInterval(function() {
+    fetch('/api/dashboard-stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update receivables
+                document.getElementById('receivablesAmount').textContent = '₹' + data.data.total_receivables.toFixed(2);
+                
+                // Update payables
+                document.getElementById('payablesAmount').textContent = '₹' + data.data.total_payables.toFixed(2);
+                
+                // Update timestamp
+                const now = new Date();
+                document.getElementById('loadTime').textContent = now.toLocaleTimeString('en-IN', { hour12: true });
+            }
+        })
+        .catch(error => console.error('Error refreshing dashboard:', error));
+}, 30000); // Refresh every 30 seconds
+</script>
+
+{% endblock %}

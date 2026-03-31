@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Create Sale{% endblock %}
+{% block page_title %}Create New Sale{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-cart-check"></i> Create New Sale</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('sales.create_sale') }}" id="saleForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="customer_id" class="form-label">Customer *</label>
+                        <div class="input-group">
+                            <select class="form-select" id="customer_id" name="customer_id" required>
+                                <option value="">Select Customer</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.customer_id }}">{{ customer.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <a href="{{ url_for('customers.create_customer') }}" target="_blank" class="btn btn-success" title="Add New Customer">
+                                <i class="bi bi-plus-circle"></i> Add New
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="sale_date" class="form-label">Sale Date *</label>
+                        <input type="date" class="form-control" id="sale_date" name="sale_date" 
+                               value="{{ today }}" required>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="due_date" class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="due_date" name="due_date">
+                    </div>
+                </div>
+                
+                <hr>
+                <h6>Sale Items</h6>
+                <div id="items-container">
+                    <div class="row item-row mb-2">
+                        <div class="col-md-4">
+                            <select class="form-select" name="item_id[]" required>
+                                <option value="">Select Item</option>
+                                {% for item in items %}
+                                <option value="{{ item.item_id }}" data-price="{{ item.sale_price }}">
+                                    {{ item.item_name }} ({{ item.unit }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" step="0.01" class="form-control quantity" name="quantity[]" 
+                                   placeholder="Quantity" required>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" step="0.01" class="form-control price" name="price[]" 
+                                   placeholder="Price" required>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="text" class="form-control item-total" readonly placeholder="Total">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger remove-item">Remove</button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" id="add-item">
+                    <i class="bi bi-plus"></i> Add Item
+                </button>
+                
+                <hr>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="payment_type" class="form-label">Payment Type *</label>
+                        <select class="form-select" id="payment_type" name="payment_type" required>
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="cheque">Cheque</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="advance_payment" class="form-label">Advance Payment</label>
+                        <input type="number" step="0.01" class="form-control" id="advance_payment" 
+                               name="advance_payment" value="0">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h5>Total Amount: ₹<span id="total_amount_display">0.00</span></h5>
+                    <input type="hidden" id="total_amount" name="total_amount" value="0">
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('sales.list_sales') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Create Sale
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function calculateTotal() {
+        let total = 0;
+        $('.item-row').each(function() {
+            let quantity = parseFloat($(this).find('.quantity').val()) || 0;
+            let price = parseFloat($(this).find('.price').val()) || 0;
+            let itemTotal = quantity * price;
+            $(this).find('.item-total').val(itemTotal.toFixed(2));
+            total += itemTotal;
+        });
+        $('#total_amount').val(total.toFixed(2));
+        $('#total_amount_display').text(total.toFixed(2));
+    }
+    
+    $(document).on('input', '.quantity, .price', calculateTotal);
+    
+    $(document).on('change', 'select[name="item_id[]"]', function() {
+        let price = $(this).find(':selected').data('price');
+        $(this).closest('.item-row').find('.price').val(price);
+        calculateTotal();
+    });
+    
+    $('#add-item').click(function() {
+        let newRow = $('.item-row:first').clone();
+        newRow.find('input').val('');
+        newRow.find('select').val('');
+        $('#items-container').append(newRow);
+    });
+    
+    $(document).on('click', '.remove-item', function() {
+        if ($('.item-row').length > 1) {
+            $(this).closest('.item-row').remove();
+            calculateTotal();
+        }
+    });
+});
+</script>
+{% endblock %}

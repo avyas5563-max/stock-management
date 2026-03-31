@@ -1,0 +1,243 @@
+/* Custom styles for Stock Management System */
+
+/* Add any additional custom CSS here */
+
+.pagination {
+    margin-top: 20px;
+}
+
+.table-actions {
+    white-space: nowrap;
+}
+
+/* Dashboard Stat Cards */
+.stat-card {
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+}
+
+.stat-card .icon {
+    font-size: 48px;
+    opacity: 0.3;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.stat-card h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stat-card p {
+    margin: 0;
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+.stat-card small {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* Financial Cards */
+.financial-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.financial-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.financial-card .card-header {
+    border-radius: 12px 12px 0 0 !important;
+    padding: 20px;
+    font-weight: 600;
+}
+
+.financial-card .card-body {
+    padding: 25px;
+}
+
+.financial-amount {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin: 15px 0;
+}
+
+/* Alert Cards */
+.alert-card {
+    border-left: 5px solid;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.alert-card.alert-success { border-left-color: #28a745; }
+.alert-card.alert-warning { border-left-color: #ffc107; }
+.alert-card.alert-danger { border-left-color: #dc3545; }
+.alert-card.alert-info { border-left-color: #17a2b8; }
+
+.alert-card h5 {
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+/* Quick Action Buttons */
+.quick-action-btn {
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* Trend Indicators */
+.trend-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.trend-indicator.positive {
+    background: #d4edda;
+    color: #155724;
+}
+
+.trend-indicator.negative {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.trend-indicator i {
+    font-size: 1rem;
+}
+
+/* Info Tooltip */
+.info-tooltip {
+    cursor: help;
+    color: #6c757d;
+    margin-left: 5px;
+}
+
+/* Chart Cards */
+.chart-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 25px;
+}
+
+.chart-card .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 12px 20px;
+}
+
+.chart-card .card-header h5 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Table Improvements */
+.modern-table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.modern-table thead {
+    background: #f8f9fa;
+}
+
+.modern-table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+/* Pulse Animation */
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Card Enhancements */
+.enhanced-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 8px 15px rgba(0,0,0,0.12);
+}
+
+.enhanced-card .card-header {
+    background: white;
+    border-bottom: 2px solid #f0f0f0;
+    font-weight: 600;
+    padding: 18px 25px;
+}
+
+/* Progress Bars */
+.progress-modern {
+    height: 8px;
+    border-radius: 10px;
+    background: #e9ecef;
+}
+
+.progress-modern .progress-bar {
+    border-radius: 10px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .stat-card h3 {
+        font-size: 2rem;
+    }
+    
+    .financial-amount {
+        font-size: 2rem;
+    }
+}
