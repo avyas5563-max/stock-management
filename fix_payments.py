@@ -1,4 +1,4 @@
-"""Fix payment mismatches"""
+"""Fix payment mismatches correct way"""
 import sys
 sys.path.insert(0, 'c:\\Users\\Aditya\\Desktop\\stock_project')
 
