@@ -16,6 +16,7 @@ with app.app_context():
     print("=" * 70)
     
     # Check Sales vs Customer Balances
+    # check krio hona chaiye ye change commit 
     print("\n📊 SALES STATUS:")
     sales = Sale.query.all()
     for sale in sales:
